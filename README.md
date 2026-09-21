@@ -3,11 +3,17 @@
 Documentation for HAL functions
 
 Written by: Lee Seonyu
+
 Course: Embedded Controller
+
 Program: C/C++
+
 IDE/Compiler: Keil uVision 5
+
 OS: WIn11 Home
+
 MCU: STM32F411RE (Nucleo-64)
+
 
 [TOC]
 
