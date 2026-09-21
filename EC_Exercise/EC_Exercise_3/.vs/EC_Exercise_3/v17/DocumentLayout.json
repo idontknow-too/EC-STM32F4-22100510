@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\User\\source\\repos\\EC_Exercise_3\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{1322FA43-8A2C-4A1F-9FF6-CE7A03926188}|EC_Exercise_3.vcxproj|C:\\Users\\User\\source\\repos\\EC_Exercise_3\\Exercise_3.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{1322FA43-8A2C-4A1F-9FF6-CE7A03926188}|EC_Exercise_3.vcxproj|solutionrelative:Exercise_3.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 1,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedHeight": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Exercise_3.c",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\EC_Exercise_3\\Exercise_3.c",
+              "RelativeDocumentMoniker": "Exercise_3.c",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\EC_Exercise_3\\Exercise_3.c",
+              "RelativeToolTip": "Exercise_3.c",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAgAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-09-02T17:17:56.392Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\User\\source\\repos\\Exercise_EC\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{CDFDB452-EB19-4F21-805C-44C8AA07A41C}|Exercise_EC.vcxproj|C:\\Users\\User\\source\\repos\\Exercise_EC\\Exercise_1.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{CDFDB452-EB19-4F21-805C-44C8AA07A41C}|Exercise_EC.vcxproj|solutionrelative:Exercise_1.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 1,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedHeight": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Exercise_1.c",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Exercise_EC\\Exercise_1.c",
+              "RelativeDocumentMoniker": "Exercise_1.c",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Exercise_EC\\Exercise_1.c",
+              "RelativeToolTip": "Exercise_1.c",
+              "ViewState": "AQIAAAkAAAAAAAAAAAAAABsAAAANAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-09-02T16:43:35.868Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

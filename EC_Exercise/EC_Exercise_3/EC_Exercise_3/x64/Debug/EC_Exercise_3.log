@@ -1,0 +1,5 @@
+﻿  Exercise_3.c
+C:\Users\User\source\repos\EC_Exercise_3\Exercise_3.c(56,2): warning C4098: 'addPos': 'void' 함수에서 값을 반환하고 있습니다.
+C:\Users\User\source\repos\EC_Exercise_3\Exercise_3.c(69,2): warning C4098: 'getDist': 'void' 함수에서 값을 반환하고 있습니다.
+C:\Users\User\source\repos\EC_Exercise_3\Exercise_3.c(75,33): warning C4028: 정식 매개 변수 1이(가) 선언과 다릅니다.
+  EC_Exercise_3.vcxproj -> C:\Users\User\source\repos\EC_Exercise_3\x64\Debug\EC_Exercise_3.exe
