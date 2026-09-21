@@ -10,7 +10,7 @@ Program: C/C++
 
 IDE/Compiler: Keil uVision 5
 
-OS: WIn11 Home
+OS: Win11 Home
 
 MCU: STM32F411RE (Nucleo-64)
 
@@ -26,4 +26,10 @@ GPIO_read()
 GPIO_ospeed()
 GPIO_otype()
 GPIO_pupd()
+
+---
+
+GPIO Digital InOut
+
+
 
