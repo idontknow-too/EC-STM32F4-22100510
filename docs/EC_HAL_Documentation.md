@@ -8,7 +8,7 @@ OS: Windows
 MCU: STM32F411RE (NUCLEO-F411RE)  
 Updated: 2026-10-15
 
-Function reference for the current libraries in `include/`, covering the GPIO, seven-segment display, EXTI, SysTick and stepper motor LABs. Each function is described by its purpose, declaration, parameters and example code. The organization follows the [course documentation example](https://github.com/ykkimhgu/EC-student/blob/main/docs/EC_HAL_Documentation.md); signatures and behavior follow this repository's source files.
+Function reference for the current libraries in `include/`, covering the GPIO, seven-segment display, EXTI, SysTick and stepper motor LABs. Each function includes its name and purpose, actual implementation, input/output parameters and example code. The organization follows the [course documentation example](https://github.com/ykkimhgu/EC-student/blob/main/docs/EC_HAL_Documentation.md); signatures and behavior follow this repository's source files.
 
 ## Contents
 
@@ -24,7 +24,7 @@ Function reference for the current libraries in `include/`, covering the GPIO, s
 
 ## Using the Examples
 
-Include the header shown for each module and build its source file together with its dependencies. The snippets show statements to use during setup or in the main loop; they are not separate complete programs. All functions returning `void` have no return value. Non-void return values are described individually.
+Include the header shown for each module and build its source file together with its dependencies. The implementation blocks are excerpts from the linked source files. The example snippets show statements to use during setup or in the main loop; they are not separate complete programs. All functions returning `void` have no return value. Non-void return values are described individually.
 
 Use valid pins and the documented parameter ranges. Unless stated otherwise, the functions do not check for invalid values. Use module-specific pin assignments: the display and stepper examples share some pins and are intended for separate LAB programs.
 
@@ -54,14 +54,41 @@ Call `GPIO_init()` before configuring or using a pin. GPIO output speed controls
 
 Enable the selected port's clock and set the pin mode. Output type, speed and pull resistors are configured separately.
 
+**Code structure**
+
 ```c
-void GPIO_init(PinName_t pinName, uint32_t mode);
+void GPIO_init(PinName_t pinName, uint32_t mode){     
+	GPIO_TypeDef * Port;
+	unsigned int pin;
+	ecPinmap(pinName, &Port, &pin);
+	
+	// mode  : Input(0), Output(1), AlterFunc(2), Analog(3)   
+	if (Port == GPIOA)
+		RCC_GPIOA_enable();
+	if (Port == GPIOB)
+		RCC_GPIOB_enable();
+	if (Port == GPIOC)
+		RCC_GPIOC_enable();
+	if (Port == GPIOD)
+		RCC_GPIOD_enable();
+	if (Port == GPIOE)
+		RCC_GPIOE_enable();
+	if (Port == GPIOH)
+		RCC_GPIOH_enable();
+
+
+	GPIO_mode(pinName, mode);
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: GPIO pin, for example `PB_12`.
 - `mode`: `INPUT`, `OUTPUT`, `AF` or `ANALOG`.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -74,14 +101,27 @@ GPIO_init(PC_13, INPUT);
 
 Set the pin's two mode bits in `MODER`.
 
+**Code structure**
+
 ```c
-void GPIO_mode(PinName_t pinName, uint32_t mode);
+void GPIO_mode(PinName_t pinName, uint32_t mode){
+   GPIO_TypeDef * Port;
+   unsigned int pin;
+   ecPinmap(pinName,&Port,&pin);
+
+   Port->MODER &= ~(3UL<<(2*pin));     
+   Port->MODER |= mode<<(2*pin);    
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: GPIO pin with its port clock already enabled.
 - `mode`: `INPUT`, `OUTPUT`, `AF` or `ANALOG`.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -96,14 +136,28 @@ Selecting `AF` changes the mode only; this function does not configure the alter
 
 Write a digital level to the pin's output data register.
 
+**Code structure**
+
 ```c
-void GPIO_write(PinName_t pinName, uint32_t Output);
+void GPIO_write(PinName_t pinName, uint32_t Output){
+	GPIO_TypeDef *Port;
+	unsigned int pin;
+	ecPinmap(pinName, &Port, &pin);
+
+	Port->ODR &= ~(1UL<<pin);
+	Port->ODR |= Output<<pin;
+
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: GPIO output pin.
 - `Output`: `LOW` (0) or `HIGH` (1).
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -118,11 +172,24 @@ The implementation updates `ODR` using read-modify-write operations. Concurrent 
 
 Read the pin level from `IDR`.
 
+**Code structure**
+
 ```c
-uint32_t GPIO_read(PinName_t pinName);
+uint32_t GPIO_read(PinName_t pinName){
+	GPIO_TypeDef * Port;
+	unsigned int pin;
+	ecPinmap(pinName,&Port,&pin);
+
+
+	uint32_t btVal = 0;
+
+	btVal = (Port->IDR >> pin) & 1UL;
+
+	return btVal; 
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: GPIO pin to read.
 
@@ -143,14 +210,29 @@ uint32_t button = GPIO_read(PC_13);
 
 Set the pin's output speed in `OSPEEDR`.
 
+**Code structure**
+
 ```c
-void GPIO_ospeed(PinName_t pinName, uint32_t speed);
+void GPIO_ospeed(PinName_t pinName, uint32_t speed){
+	GPIO_TypeDef * Port;
+	unsigned int pin;
+	ecPinmap(pinName,&Port,&pin);
+
+
+	Port->OSPEEDR &= ~(3UL<<(2*pin));
+	Port->OSPEEDR |= speed<<(2*pin);
+
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: GPIO pin.
 - `speed`: `SPD_L`, `SPD_M`, `SPD_F` or `SPD_H`.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -163,14 +245,28 @@ GPIO_ospeed(PB_10, SPD_F);
 
 Set push-pull or open-drain output operation.
 
+**Code structure**
+
 ```c
-void GPIO_otype(PinName_t pinName, uint32_t type);
+void GPIO_otype(PinName_t pinName, uint32_t type){
+	GPIO_TypeDef * Port;
+	unsigned int pin;
+	ecPinmap(pinName,&Port,&pin);
+
+
+	Port->OTYPER &= ~(1UL<<pin);
+	Port->OTYPER |= type<<pin;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: GPIO pin.
 - `type`: 0 for push-pull; 1 for open-drain.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -183,14 +279,29 @@ GPIO_otype(PB_12, 0); // Push-pull.
 
 Set the internal pull-up or pull-down resistor configuration.
 
+**Code structure**
+
 ```c
-void GPIO_pupd(PinName_t pinName, uint32_t pupd);
+void GPIO_pupd(PinName_t pinName, uint32_t pupd){
+	GPIO_TypeDef * Port;
+	unsigned int pin;
+	ecPinmap(pinName,&Port,&pin);
+
+
+	Port->PUPDR &= ~(3UL<<(2*pin));
+	Port->PUPDR |= pupd<<(2*pin);
+
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: GPIO pin.
 - `pupd`: `NO_PUPD`, `PU` or `PD`.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -203,13 +314,28 @@ GPIO_pupd(PA_4, PU);
 
 Toggle JKIT LED0 on `PB_12` by XORing its output bit.
 
+**Code structure**
+
 ```c
-void led_toggle(PinName_t pinName);
+void led_toggle(PinName_t pinName){
+
+	GPIO_TypeDef *Port;
+	unsigned int pin;
+	ecPinmap(pinName, &Port, &pin);
+	
+	GPIOB->ODR ^= (1UL << 12);
+
+
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: Accepted by the interface, but the current implementation always toggles `PB_12`. Pass `PB_12` for this version.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -242,13 +368,37 @@ Call one clock initializer during startup, before `SysTick_init()`. These exampl
 
 Enable the 16 MHz HSI oscillator, wait for it to become ready and select it as the system clock. Set `EC_SYSCLK` to 16000000.
 
+**Code structure**
+
 ```c
-void RCC_HSI_init(void);
+void RCC_HSI_init() {
+// Enable High Speed Internal Clock (HSI = 16 MHz)
+  //RCC->CR |= ((uint32_t)RCC_CR_HSION);
+	RCC->CR |= 0x00000001U;
+	
+  // wait until HSI is ready
+  //while ( (RCC->CR & (uint32_t) RCC_CR_HSIRDY) == 0 ) {;}
+	while ( (RCC->CR & 0x00000002U) == 0 ) {;}
+	
+  // Select HSI as system clock source 
+  	RCC->CFGR &= (uint32_t)(~RCC_CFGR_SW); 								// not essential
+  	RCC->CFGR |= (uint32_t)RCC_CFGR_SW_HSI; 								//00: HSI16 oscillator used as system clock
+
+	// Wait till HSI is used as system clock source
+  	while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS) != 0 ) {;}  
+
+	
+	EC_SYSCLK=16000000;	
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -260,13 +410,65 @@ RCC_HSI_init();
 
 Use HSI with PLLM = 8, PLLN = 84 and PLLP = 2 to select an 84 MHz system clock. Set AHB to 84 MHz, APB1 to 42 MHz, APB2 to 84 MHz and `EC_SYSCLK` to 84000000.
 
+**Code structure**
+
 ```c
-void RCC_PLL_init(void);
+void RCC_PLL_init() {	
+	// To correctly read data from FLASH memory, the number of wait states (LATENCY)
+  // must be correctly programmed according to the frequency of the CPU clock
+  // (HCLK) and the supply voltage of the device.		
+	FLASH->ACR &= ~FLASH_ACR_LATENCY;
+	FLASH->ACR |=  FLASH_ACR_LATENCY_2WS;
+		
+	// Enable the Internal High Speed oscillator (HSI)
+	RCC->CR |= RCC_CR_HSION;
+	while((RCC->CR & RCC_CR_HSIRDY) == 0);
+	
+	// Disable PLL for configuration
+	RCC->CR    &= ~RCC_CR_PLLON;
+	
+	// Select clock source to PLL
+	RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLSRC; 		// Set source for PLL: clear bits
+	RCC->PLLCFGR |= RCC_PLLCFGR_PLLSRC_HSI; // Set source for PLL: 0 =HSI, 1 = HSE
+	
+	// Make PLL as 84 MHz
+	// f(VCO clock) = f(PLL clock input) * (PLLN / PLLM) = 16MHz * 84/8 = 168 MHz
+	// f(PLLP output) = f(VCO clock) / PLLP = 168MHz/2 = 84MHz
+	RCC->PLLCFGR = (RCC->PLLCFGR & ~RCC_PLLCFGR_PLLN) | 84U << 6;
+	RCC->PLLCFGR = (RCC->PLLCFGR & ~RCC_PLLCFGR_PLLM) | 8U ; 
+	RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLP;  // 00: PLLP = 2, 01: PLLP = 4, 10: PLLP = 6, 11: PLLP = 8	
+	
+	
+	// Enable PLL after configuration
+	RCC->CR   |= RCC_CR_PLLON; 
+	// while((RCC->CR & RCC_CR_PLLRDY)>>25 != 0);
+	while ((RCC->CR & RCC_CR_PLLRDY) == 0);
+	
+	// Select PLL as system clock
+	RCC->CFGR &= ~RCC_CFGR_SW;
+	RCC->CFGR |= RCC_CFGR_SW_PLL;
+	
+	// Wait until System Clock has been selected
+	while ((RCC->CFGR & RCC_CFGR_SWS) != 8UL);
+	
+	// The maximum frequency of the AHB and APB2 is 100MHz,
+	// The maximum frequency of the APB1 is 50 MHz.
+	RCC->CFGR &= ~RCC_CFGR_HPRE;  		// AHB prescaler = 1; SYSCLK not divided (84MHz)
+	RCC->CFGR &= ~RCC_CFGR_PPRE1; 		// APB1 prescaler = 2, HCLK divided by 2 (42MHz)
+	RCC->CFGR |=  RCC_CFGR_PPRE1_2;
+	RCC->CFGR &= ~RCC_CFGR_PPRE2; 		// APB high-speed prescaler (APB2) = 1, HCLK not divided	(84MHz)
+	
+	EC_SYSCLK=84000000;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -278,13 +480,23 @@ RCC_PLL_init();
 
 Wait using a software decrement loop whose count is calculated from `EC_SYSCLK`.
 
+**Code structure**
+
 ```c
-void delay_ms_HSI(uint32_t ms);
+void delay_ms_HSI(uint32_t ms) {
+	//uint32_t EC_SYSCLK=16000000;
+	volatile uint32_t cnt = ((uint32_t)EC_SYSCLK / (1000UL * 6)) * ms;
+	while (cnt > 0) cnt--;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `ms`: Requested delay in milliseconds.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -299,13 +511,23 @@ The duration is approximate and depends on generated instructions and compiler o
 
 Enable the GPIOA peripheral clock in `RCC->AHB1ENR`.
 
+**Code structure**
+
 ```c
-void RCC_GPIOA_enable(void);
+void RCC_GPIOA_enable()
+{
+	// RCC Peripheral Clock Enable Register 
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -317,13 +539,23 @@ RCC_GPIOA_enable();
 
 Enable the GPIOB peripheral clock in `RCC->AHB1ENR`.
 
+**Code structure**
+
 ```c
-void RCC_GPIOB_enable(void);
+void RCC_GPIOB_enable()
+{
+	// RCC Peripheral Clock Enable Register 
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -335,13 +567,23 @@ RCC_GPIOB_enable();
 
 Enable the GPIOC peripheral clock in `RCC->AHB1ENR`.
 
+**Code structure**
+
 ```c
-void RCC_GPIOC_enable(void);
+void RCC_GPIOC_enable()
+{
+	// RCC Peripheral Clock Enable Register
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -353,13 +595,23 @@ RCC_GPIOC_enable();
 
 Enable the GPIOD peripheral clock in `RCC->AHB1ENR`.
 
+**Code structure**
+
 ```c
-void RCC_GPIOD_enable(void);
+void RCC_GPIOD_enable()
+{
+	// RCC Peripheral Clock Enable Register
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -371,13 +623,23 @@ RCC_GPIOD_enable();
 
 Enable the GPIOE peripheral clock in `RCC->AHB1ENR`.
 
+**Code structure**
+
 ```c
-void RCC_GPIOE_enable(void);
+void RCC_GPIOE_enable()
+{
+	// RCC Peripheral Clock Enable Register
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -389,13 +651,23 @@ RCC_GPIOE_enable();
 
 Enable the GPIOH peripheral clock in `RCC->AHB1ENR`.
 
+**Code structure**
+
 ```c
-void RCC_GPIOH_enable(void);
+void RCC_GPIOH_enable()
+{
+	// RCC Peripheral Clock Enable Register
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -421,15 +693,44 @@ The header also provides Arduino connector aliases such as `D13` (`PA_5`). Use c
 
 Decode a pin name into a GPIO register-block pointer and a pin number. The implementation recognizes port codes A, B, C, D, E and H.
 
+**Code structure**
+
 ```c
-void ecPinmap(PinName_t pinName, GPIO_TypeDef **GPIOx, unsigned int *pin);
+void ecPinmap(PinName_t pinName, GPIO_TypeDef **GPIOx, unsigned int *pin)
+{
+	
+	unsigned int pinNum= pinName & (0x000F);
+	*pin=pinNum;
+
+	unsigned int portNum=(pinName>>4);
+	
+	
+	if (portNum==0)
+		*GPIOx=GPIOA;
+	else if (portNum==1)
+		*GPIOx=GPIOB;
+	else if (portNum==2)
+		*GPIOx=GPIOC;
+	else if (portNum==3)
+		*GPIOx=GPIOD;
+	else if (portNum==4)
+		*GPIOx=GPIOE;
+	else if (portNum==7)
+		*GPIOx=GPIOH;
+	else 
+		*GPIOx=GPIOA;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: Encoded pin name.
-- `GPIOx`: Address of the variable that receives the GPIO port pointer.
-- `pin`: Address of the variable that receives the pin number, 0 to 15.
+- `GPIOx` (output): Address of the variable that receives the GPIO port pointer.
+- `pin` (output): Address of the variable that receives the pin number, 0 to 15.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -462,13 +763,30 @@ Segment order is `a, b, c, d, e, f, g, dp`. Digit-selection order is FND0 to FND
 
 Store the eight segment pin names and configure them as push-pull outputs with no pull resistors and medium output speed.
 
+**Code structure**
+
 ```c
-void FND_init(PinName_t *pinFND);
+void FND_init(PinName_t *pinFND){
+	for (int i=0; i<8; i++){
+
+		_fndPins[i] = pinFND[i];
+		GPIO_init(_fndPins[i], OUTPUT);   // Output Mode 
+        GPIO_otype(_fndPins[i], 0);       // Push-Pull 
+        GPIO_pupd(_fndPins[i], 0);        // No Pull-up-Pull-down
+        GPIO_ospeed(_fndPins[i], 1);      // Medium Speed
+
+        
+	}
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinFND`: Pointer to eight pin names in `a, b, c, d, e, f, g, dp` order.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -481,13 +799,28 @@ FND_init(segments);
 
 Store the four digit-selection pin names and configure them as push-pull outputs.
 
+**Code structure**
+
 ```c
-void FND_select_init(PinName_t *selectFND);
+void FND_select_init(PinName_t *selectFND){	
+
+    for (int i=0; i<4; i++){
+
+        _fndSel[i] = selectFND[i]; 
+		GPIO_init(_fndSel[i], OUTPUT);   // Output Mode
+        GPIO_otype(_fndSel[i], 0);       // Push-Pull 
+
+    }
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `selectFND`: Pointer to four pin names in FND0 to FND3 order.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -500,13 +833,35 @@ FND_select_init(digits);
 
 Write the selected digit's pattern to the eight segment pins. The digit selection is controlled separately by `FND_select()`.
 
+**Code structure**
+
 ```c
-void FND_display(uint8_t num);
+void FND_display(uint8_t num){
+   
+    if(num > 9){
+
+        printf("It can't display. Too high.");
+
+    }  
+    else{
+        
+        for(int i = 0; i < 8; i++){
+
+            GPIO_write(_fndPins[i], numberFND[num][i]);
+
+        }
+    }
+
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `num`: Digit from 0 to 9.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -525,13 +880,33 @@ For values above 9, the function prints an error message and leaves the segment 
 
 Set the selected digit's selection output HIGH and the other three outputs LOW.
 
+**Code structure**
+
 ```c
-void FND_select(uint8_t digit);
+void FND_select(uint8_t digit){
+    
+    for(int i = 0; i < 4; i++){
+
+        if(i == digit){
+            GPIO_write(_fndSel[i], 1);
+
+        }
+        else{
+            GPIO_write(_fndSel[i], 0);
+
+        }
+    }
+
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `digit`: 0, 1, 2 or 3 for FND0 to FND3.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -573,15 +948,68 @@ The current port-selection code handles GPIOA to GPIOE; GPIOH is not correctly r
 
 Enable the SYSCFG clock, map the input to its EXTI line, enable the requested trigger, unmask the line and enable its NVIC interrupt.
 
+**Code structure**
+
 ```c
-void EXTI_init(PinName_t pinName, uint32_t trig_type, uint32_t priority);
+void EXTI_init(PinName_t pinName, uint32_t trig_type,uint32_t priority){
+
+	GPIO_TypeDef *Port;
+	unsigned int pin;
+	ecPinmap(pinName,&Port,&pin);
+	
+	// Enable SYSCFG clock for the EXTI port mapping 	
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;		
+	
+
+	// Connect EXTI to the GPIO Port_y Pin_x
+	// Pin 0~3: EXTICR1 // EXTICR[0]
+	// Pin 4~7: EXTICR2 // EXTICR[1]
+	// Pin 8~11: EXTICR3 // EXTICR[2]
+	// Pin 12~15: EXTICR4 // EXTICR[3]	
+	uint32_t EXTICR_port=0;
+	if		(Port == GPIOA) EXTICR_port = 0;
+	else if	(Port == GPIOB) EXTICR_port = 1;
+	else if	(Port == GPIOC) EXTICR_port = 2;
+	else if	(Port == GPIOD) EXTICR_port = 3;
+	else					EXTICR_port = 4;
+	
+	SYSCFG->EXTICR[pin/4] &= ~(0xFUL << ((pin%4)*4));			// clear 4 bits
+	SYSCFG->EXTICR[pin/4] |= (EXTICR_port << ((pin%4)*4));			// Set 4 bits
+	
+
+	// Select  Trigger edge (RISE, FALL, BOTH)
+	if (trig_type == FALL) 		EXTI->FTSR |= 1UL << pin;  // Falling trigger enable 
+	else if	(trig_type == RISE) EXTI->RTSR |= 1UL << pin;   // Rising trigger enable 
+	else if	(trig_type == BOTH) {			// Both falling/rising trigger enable
+		EXTI->RTSR |= 1UL << pin; 
+		EXTI->FTSR |= 1UL << pin;
+	} 
+	
+	// Enable EXTI, with Not-Masked Interrupt Request 
+	// Not-mask (==Enable) EXTIx
+ 	EXTI->IMR |= 1UL << pin;
+	
+	
+	// NVIC(IRQ) Setting
+	uint32_t EXTI_IRQn = 0;
+	if (pin < 5) 		EXTI_IRQn = EXTI0_IRQn + pin;
+	else if	(pin < 10) 	EXTI_IRQn = EXTI9_5_IRQn;
+	else 				EXTI_IRQn = EXTI15_10_IRQn;
+		
+	NVIC_SetPriority(EXTI_IRQn, priority);	
+	NVIC_EnableIRQ(EXTI_IRQn); 				
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: GPIO input pin.
 - `trig_type`: `FALL`, `RISE` or `BOTH`.
 - `priority`: NVIC priority from 0 to 15; a smaller number has higher priority.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -597,13 +1025,25 @@ The application must supply the matching IRQ handler and clear the pending flag 
 
 Unmask the selected EXTI line in `IMR` after it has been configured.
 
+**Code structure**
+
 ```c
-void EXTI_enable(PinName_t pinName);
+void EXTI_enable(PinName_t pinName) {
+	GPIO_TypeDef *Port;
+	unsigned int pin;
+	ecPinmap(pinName,&Port,&pin);
+	
+	EXTI->IMR |= (1UL << pin);     // not masked (i.e., Interrupt enabled)
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: Pin identifying the EXTI line to enable.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -615,13 +1055,25 @@ EXTI_enable(PC_13);
 
 Mask the selected EXTI line in `IMR`. GPIO input reads remain available.
 
+**Code structure**
+
 ```c
-void EXTI_disable(PinName_t pinName);
+void EXTI_disable(PinName_t pinName) {
+	GPIO_TypeDef *Port;
+	unsigned int pin;
+	ecPinmap(pinName,&Port,&pin);
+
+	EXTI->IMR &= ~(1UL << pin);    // masked (i.e., Interrupt disabled)
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: Pin identifying the EXTI line to disable.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -635,11 +1087,20 @@ This does not clear a pending flag or disable other lines sharing the same NVIC 
 
 Read the selected line's pending bit in `EXTI->PR`.
 
+**Code structure**
+
 ```c
-uint32_t is_pending_EXTI(PinName_t pinName);
+uint32_t is_pending_EXTI(PinName_t pinName) {
+	GPIO_TypeDef *Port;
+	unsigned int pin;
+	ecPinmap(pinName,&Port,&pin);
+
+	uint32_t EXTI_PRx = (EXTI->PR >> pin) & 1UL;     // read PRx, EXTI pending bit.  Use  (REG>>k & 1) to read.
+	return EXTI_PRx; 	// Return only 0 or 1
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: Pin identifying the EXTI line to check.
 
@@ -659,13 +1120,26 @@ if (is_pending_EXTI(PC_13)) {
 
 Clear the selected EXTI pending bit by writing 1 to that bit in `PR`.
 
+**Code structure**
+
 ```c
-void clear_pending_EXTI(PinName_t pinName);
+void clear_pending_EXTI(PinName_t pinName){
+	GPIO_TypeDef *Port;
+	unsigned int pin;
+	ecPinmap(pinName, &Port, &pin);
+
+	// clear by writing 1 to the pending bit
+	EXTI->PR = (1UL << pin);   
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `pinName`: Pin identifying the pending flag to clear.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -693,13 +1167,50 @@ The library already defines `SysTick_Handler()`. Do not add a second definition 
 
 Configure the processor-clock SysTick counter with `LOAD = EC_SYSCLK / 1000 - 1`, enable its interrupt and start counting. The SysTick priority is 15.
 
+**Code structure**
+
 ```c
-void SysTick_init(void);
+void SysTick_init(void){
+	//  SysTick Control and Status Register
+	// Disable SysTick IRQ and SysTick Counter
+	SysTick->CTRL = 0;											
+	
+	// Select processor clock
+	// 1 = processor clock;  0 = external clock
+	SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk;
+	// SysTick->CTRL |=  1UL << 2U;
+
+	// Enables SysTick exception request
+	// 1 = counting down to zero --> SysTick exception request 
+	SysTick->CTRL |=  1UL << 1U;
+
+	// SysTick Reload Value Register : (SYSCLK / 1000) - 1  ->  1 ms
+	//   HSI 16 MHz :  15999      PLL 84 MHz : 83999 
+	SysTick->LOAD = (uint32_t)EC_SYSCLK *1UL/ 1000UL - 1UL;   // 1[ms] = 1/1000[s] 
+
+	// SysTick Current Value Register : Reset counter value to 0
+	SysTick->VAL = 0;
+
+	// Enables SysTick exception request
+	// 1 = counting down to zero --> SysTick exception request
+	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
+	
+	// Start the SysTick counter.
+	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+		
+	// Set the SysTick exception priority.
+	NVIC_SetPriority(SysTick_IRQn, 15);		// Priority 15
+	NVIC_EnableIRQ(SysTick_IRQn);			// Legacy call; TICKINT above enables SysTick requests.
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -714,13 +1225,21 @@ Reinitialization reloads the hardware counter but does not set `msTicks` to zero
 
 Handle the SysTick exception by calling `SysTick_counter()`. With the configured time base, the handler is requested every 1 ms.
 
+**Code structure**
+
 ```c
-void SysTick_Handler(void);
+void SysTick_Handler(void){
+	SysTick_counter();	
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -736,13 +1255,21 @@ This is an interrupt entry point supplied by the library, not a function normall
 
 Increment `msTicks` by one. The library's SysTick handler calls this once per serviced tick.
 
+**Code structure**
+
 ```c
-void SysTick_counter(void);
+void SysTick_counter(void){
+	msTicks++;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -757,13 +1284,23 @@ Do not also call it from the main loop; extra calls advance the software clock w
 
 Block until the unsigned difference between `msTicks` and its starting value reaches `msec`.
 
+**Code structure**
+
 ```c
-void delay_ms(uint32_t msec);
+void delay_ms (uint32_t msec){
+  	uint32_t curTicks;
+  	curTicks = msTicks;
+	while ((msTicks - curTicks) < msec){;}		// unsigned math: safe across wrap-around
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `msec`: Requested wait in milliseconds; 0 returns immediately.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -779,13 +1316,22 @@ Resolution is 1 ms. Unsigned subtraction supports counter wrap-around. Avoid cal
 
 Write zero to the hardware SysTick current-value register (`VAL`). The timer reloads on a subsequent clock.
 
+**Code structure**
+
 ```c
-void SysTick_reset(void);
+void SysTick_reset(void)
+{
+	SysTick->VAL = 0;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -801,11 +1347,15 @@ This does not reset the software counter `msTicks`.
 
 Read the current hardware down-counter value from `SysTick->VAL`.
 
+**Code structure**
+
 ```c
-uint32_t SysTick_val(void);
+uint32_t SysTick_val(void) {
+	return SysTick->VAL;
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
 
@@ -863,14 +1413,31 @@ stepper_stop();
 
 Select the Full or Half FSM, store the four motor pin names and configure them as outputs with `SPD_F` output speed.
 
+**Code structure**
+
 ```c
-void stepper_init(uint32_t mode, PinName_t *pinStepper);
+void stepper_init(uint32_t mode, PinName_t *pinStepper){
+    if (mode == HALF)
+        fsm = fsm_Half;
+    else
+        fsm = fsm_Full;
+
+    for (int i = 0; i < 4; i++){
+        stepperPins[i] = pinStepper[i];
+        GPIO_init(stepperPins[i], OUTPUT);
+        GPIO_ospeed(stepperPins[i], SPD_F);
+    }
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `mode`: `FULL` or `HALF`.
 - `pinStepper`: Pointer to four pin names in `A, B, A', B'` order.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -885,13 +1452,21 @@ GPIO output speed is separate from motor rpm. Set rpm with `stepper_speed()` bef
 
 Calculate the delay per step as `60000 / (STEP_PER_REV * speedRPM)` in milliseconds and store it as an integer. The call sets the speed; it does not start movement or wait.
 
+**Code structure**
+
 ```c
-void stepper_speed(float speedRPM);
+void stepper_speed(float speedRPM){
+    _step_delay = 60*1000/(STEP_PER_REV*speedRPM); // ms per step
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `speedRPM`: Positive requested speed in revolutions per minute, including decimal values such as `0.1f` or `14.6f`.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -907,14 +1482,29 @@ The result is truncated to whole milliseconds. Use a positive finite rpm that gi
 
 For each requested step, select the next FSM state, write its four outputs and wait for the stored step delay. The function blocks until the movement finishes or its active step command is cancelled.
 
+**Code structure**
+
 ```c
-void stepper_step(uint32_t steps, uint32_t direction);
+void stepper_step(uint32_t steps, uint32_t direction){
+    if (fsm == 0) return; // stepper_init() must be called first.
+    _steps = steps;
+
+    for (uint32_t i = 0; i < _steps; i++){
+        state = fsm[state].next[direction];
+        stepper_out(state);
+        delay_ms(_step_delay);
+    }
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `steps`: Number of sequence transitions to execute. `STEP_PER_REV` requests one nominal revolution when the macro matches the mode.
 - `direction`: `DIR_CW` (0) or `DIR_CCW` (1).
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -933,13 +1523,23 @@ Returns without movement if initialization has not selected an FSM. Direction mu
 
 Write the selected FSM state's `out[4]` values to the four motor GPIO pins in order. It does not change the saved state used by `stepper_step()`.
 
+**Code structure**
+
 ```c
-void stepper_out(uint32_t state);
+void stepper_out(uint32_t state){
+    for (int i = 0; i < 4; i++){
+        GPIO_write(stepperPins[i], fsm[state].out[i]);
+    }
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 - `state`: `S0` to `S3` for Full stepping, or `S0` to `S7` for Half stepping.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -955,13 +1555,24 @@ Call `stepper_init()` first. This function does not validate its state index and
 
 Set the active command's step limit to zero and write LOW to all four motor pins.
 
+**Code structure**
+
 ```c
-void stepper_stop(void);
+void stepper_stop(void){
+    _steps = 0; // Cancel the current command.
+    for (int i = 0; i < 4; i++){
+        GPIO_write(stepperPins[i], _steps);
+    }
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
@@ -998,13 +1609,45 @@ This header contains the `MCU_init()` definition and the global `pinFND` and `se
 
 Initialize the 84 MHz PLL clock and 1 ms SysTick, configure LED0 and LED1 as outputs, configure SW2 and SW1 as pull-up inputs with falling-edge interrupts at priority 10, and initialize the display pins.
 
+**Code structure**
+
 ```c
-void MCU_init(void);
+void MCU_init(void){  // Initialize peripherals used by this LAB.
+
+
+    RCC_PLL_init();                 // System Clock = 84MHz
+    SysTick_init();                 // SysTick Timer Initialization
+    // Initialize LED0 (PB12) and LED1 (PB13) as outputs.
+    GPIO_init(LED0_PIN, OUTPUT);    // LED0 for EVAL board	
+    GPIO_init(LED1_PIN, OUTPUT);    // LED1 for EVAL board
+
+    // Configure SW2 (PA4) and SW1 (PD2) as pull-up inputs.
+    GPIO_init(SW2_PIN, INPUT);  // INPUT for EVAL board
+    GPIO_pupd(SW2_PIN, PU);  // PULL-UP for EVAL board
+
+
+    GPIO_init(SW1_PIN, INPUT);  // INPUT for EVAL board
+    GPIO_pupd(SW1_PIN, PU);  // PULL-UP for EVAL board
+
+    // Configure falling-edge interrupts for SW2 and SW1.
+    EXTI_init(SW2_PIN, FALL, 10);
+    EXTI_init(SW1_PIN, FALL, 10);
+
+    // Configure segment outputs and all four digit-select outputs.
+    FND_init(pinFND);
+    FND_select_init(selectFND);  
+    
+
+}
 ```
 
-**Parameters**
+**Parameters (input/output)**
 
 None.
+
+**Return value**
+
+None (`void`).
 
 **Example code**
 
